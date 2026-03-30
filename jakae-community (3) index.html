@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>자캐 커뮤니티</title>
+
+<!-- ✅ Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getFirestore, collection, addDoc, getDocs, deleteDoc, updateDoc,
+    doc, query, orderBy, onSnapshot, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import {
+    getStorage, ref, uploadString, getDownloadURL, deleteObject
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 🔧 여기에 Firebase 설정을 붙여넣으세요!
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  const firebaseConfig = {
+  apiKey: "AIzaSyBlMd-sOgPFX1dsWrtQ3EelTwdRRvCTX2g",
+  authDomain: "comu01-357ce.firebaseapp.com",
+  projectId: "comu01-357ce",
+  storageBucket: "comu01-357ce.firebasestorage.app",
+  messagingSenderId: "822098445912",
+  appId: "1:822098445912:web:d3dd52863c8c30fe11ac2d",
+  measurementId: "G-X91C36XEZL"
+  };
+
+  const FIREBASE_READY = firebaseConfig.apiKey !== "여기에_apiKey_입력";
+
+  let app, db, storage;
+  if (FIREBASE_READY) {
+    app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    storage = getStorage(app);
+  }
+
+  // Firebase 준비 여부를 전역 노출
+  window.__fb = { ready: FIREBASE_READY, db, storage,
+    collection, addDoc, getDocs, deleteDoc, updateDoc,
+    doc, query, orderBy, onSnapshot, serverTimestamp,
+    ref, uploadString, getDownloadURL, deleteObject
+  };
+
+  // 앱 초기화 신호
+  document.addEventListener('DOMContentLoaded', () => {
+    window.dispatchEvent(new Event('fb-ready'));
+  });
+</script>
+
+<style>
+:root {
+  --primary: #5b4fcf;
+  --primary-light: rgba(91,79,207,0.10);
+  --primary-hover: #4a3fbc;
+  --primary-faint: rgba(91,79,207,0.05);
+  --body-bg: #f5f5f5;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--body-bg); color: #222; min-height: 100vh; }
+
+/* ── NAV ── */
+nav { background: #fff; border-bottom: 1px solid #e0e0e0; position: sticky; top: 0; z-index: 100; }
+.nav-inner { max-width: 1100px; margin: auto; display: flex; align-items: center; padding: 0 16px; height: 56px; gap: 6px; flex-wrap: nowrap; overflow-x: auto; }
+.nav-logo { font-size: 17px; font-weight: 700; color: var(--primary); text-decoration: none; margin-right: 8px; display: flex; align-items: center; gap: 7px; white-space: nowrap; }
+.nav-logo img { height: 28px; width: 28px; object-fit: contain; border-radius: 5px; }
+.nav-tab { padding: 6px 12px; border-radius: 20px; border: none; background: none; cursor: pointer; font-size: 13px; color: #555; white-space: nowrap; transition: all .15s; }
+.nav-tab:hover { background: var(--primary-light); color: var(--primary); }
+.nav-tab.active { background: var(--primary); color: #fff; }
+.nav-right { margin-left: auto; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.nav-admin-btn { padding: 6px 11px; border-radius: 6px; border: 1px solid #e0e0e0; background: none; cursor: pointer; font-size: 13px; color: #888; white-space: nowrap; }
+.nav-admin-btn:hover { border-color: var(--primary); color: var(--primary); }
+.admin-badge { background: var(--primary); color: #fff; font-size: 11px; padding: 2px 7px; border-radius: 10px; margin-left: 3px; }
+.fb-status { font-size: 11px; padding: 3px 8px; border-radius: 10px; }
+.fb-ok { background: #e8f5e9; color: #2e7d32; }
+.fb-no { background: #fff3e0; color: #e65100; }
+
+/* ── LAYOUT ── */
+.container { max-width: 1100px; margin: 0 auto; padding: 20px 16px; display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
+@media (max-width: 780px) { .container { grid-template-columns: 1fr; } .sidebar { display: none; } }
+
+/* ── BANNER ── */
+.banner-area { margin-bottom: 16px; }
+.banner { border-radius: 12px; overflow: hidden; min-height: 120px; display: flex; position: relative; }
+.banner-bg-color { position: absolute; inset: 0; background: linear-gradient(135deg, var(--primary) 0%, #9b8ef5 100%); }
+.banner-bg-img { position: absolute; inset: 0; background-size: cover; background-position: center; display: none; }
+.banner-overlay { position: absolute; inset: 0; background: rgba(0,0,0,.32); display: none; }
+.banner-content { position: relative; z-index: 2; padding: 24px; flex: 1; color: #fff; }
+.banner h2 { font-size: 20px; font-weight: 700; }
+.banner p { font-size: 14px; opacity: .9; margin-top: 4px; }
+.banner-dots { display: flex; gap: 6px; margin-top: 14px; }
+.banner-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.35); cursor: pointer; }
+.banner-dot.active { background: #fff; }
+
+/* ── NOTICE BAR ── */
+.notice-bar { background: #fff; border-radius: 8px; border-left: 4px solid var(--primary); padding: 10px 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
+.notice-label { background: var(--primary); color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 4px; white-space: nowrap; font-weight: 600; }
+.notice-thumb { width: 36px; height: 36px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
+.notice-text { font-size: 13px; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.notice-date { font-size: 12px; color: #aaa; white-space: nowrap; margin-left: auto; }
+
+/* ── BOARD ── */
+.board-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.board-title { font-size: 16px; font-weight: 600; color: #333; }
+.write-btn { padding: 7px 15px; background: var(--primary); color: #fff; border: none; border-radius: 7px; font-size: 13px; cursor: pointer; }
+.write-btn:hover { background: var(--primary-hover); }
+.post-list { background: #fff; border-radius: 10px; border: 1px solid #e8e8e8; overflow: hidden; }
+.post-item { padding: 14px 16px; border-bottom: 1px solid #f2f2f2; display: flex; justify-content: space-between; gap: 10px; cursor: pointer; transition: background .1s; }
+.post-item:last-child { border-bottom: none; }
+.post-item:hover { background: var(--primary-faint); }
+.post-thumb { width: 52px; height: 52px; object-fit: cover; border-radius: 6px; flex-shrink: 0; }
+.post-cat { display: inline-block; font-size: 11px; padding: 2px 7px; border-radius: 4px; font-weight: 600; margin-bottom: 4px; }
+.cat-free { background: #e8f5e9; color: #2e7d32; }
+.cat-anon { background: #fff3e0; color: #e65100; }
+.cat-notice { background: #e3f2fd; color: #1565c0; }
+.cat-question { background: #fce4ec; color: #880e4f; }
+.post-title { font-size: 14px; color: #222; line-height: 1.4; }
+.post-meta { font-size: 12px; color: #aaa; margin-top: 4px; display: flex; gap: 8px; flex-wrap: wrap; }
+.post-right { text-align: right; font-size: 12px; color: #aaa; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.post-likes { color: var(--primary); font-weight: 600; }
+.empty { text-align: center; padding: 40px; color: #bbb; font-size: 14px; }
+
+/* ── SIDEBAR ── */
+.sidebar { display: flex; flex-direction: column; gap: 14px; }
+.side-card { background: #fff; border-radius: 10px; border: 1px solid #e8e8e8; padding: 16px; }
+.side-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: #333; }
+.popular-item { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid #f5f5f5; cursor: pointer; }
+.popular-item:last-child { border-bottom: none; }
+.popular-num { font-size: 14px; font-weight: 700; color: var(--primary); min-width: 18px; }
+.popular-text { font-size: 13px; color: #333; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.stat-item { text-align: center; padding: 10px; background: var(--primary-faint); border-radius: 8px; }
+.stat-num { font-size: 18px; font-weight: 700; color: var(--primary); }
+.stat-label { font-size: 11px; color: #888; margin-top: 2px; }
+
+/* ── CALENDAR ── */
+.cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.cal-nav { background: none; border: none; font-size: 16px; cursor: pointer; color: var(--primary); padding: 2px 8px; border-radius: 5px; }
+.cal-nav:hover { background: var(--primary-light); }
+.cal-month { font-size: 14px; font-weight: 600; color: #333; }
+.cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; }
+.cal-dow { text-align: center; font-size: 10px; font-weight: 600; color: #aaa; padding: 3px 0; }
+.cal-dow:first-child { color: #e74c3c; }
+.cal-dow:last-child { color: #4a90d9; }
+.cal-day { text-align: center; font-size: 12px; padding: 4px 2px; border-radius: 5px; cursor: pointer; min-height: 28px; position: relative; }
+.cal-day:hover { background: var(--primary-light); }
+.cal-day.today { background: var(--primary); color: #fff; font-weight: 700; }
+.cal-day.other-month { color: #ccc; }
+.cal-day.has-event::after { content: ''; display: block; width: 4px; height: 4px; background: var(--primary); border-radius: 50%; margin: 1px auto 0; }
+.cal-day.today.has-event::after { background: #fff; }
+.cal-day.sat { color: #4a90d9; }
+.cal-day.sun { color: #e74c3c; }
+.cal-day.today { color: #fff !important; }
+.cal-events { margin-top: 10px; }
+.cal-event-item { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; border-bottom: 1px solid #f5f5f5; font-size: 12px; }
+.cal-event-item:last-child { border-bottom: none; }
+.cal-event-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+.cal-event-info { flex: 1; }
+.cal-event-title { font-weight: 600; color: #333; }
+.cal-event-date { color: #aaa; font-size: 11px; margin-top: 1px; }
+.cal-event-del { background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 13px; padding: 0 2px; }
+
+/* ── MODAL ── */
+.modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 300; align-items: center; justify-content: center; padding: 16px; }
+.modal-bg.show { display: flex; }
+.modal { background: #fff; border-radius: 14px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; padding: 24px; position: relative; }
+.modal-close { position: absolute; top: 14px; right: 16px; background: none; border: none; font-size: 20px; cursor: pointer; color: #888; }
+.modal-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; color: #333; }
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 13px; color: #555; margin-bottom: 6px; display: block; font-weight: 500; }
+.form-input { width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; transition: border .15s; }
+.form-input:focus { border-color: var(--primary); }
+.form-select { width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; background: #fff; }
+.form-textarea { width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; resize: vertical; min-height: 120px; outline: none; font-family: inherit; }
+.form-textarea:focus { border-color: var(--primary); }
+.submit-btn { width: 100%; padding: 11px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 6px; }
+.submit-btn:hover { background: var(--primary-hover); }
+
+/* ── IMAGE UPLOAD ── */
+.img-upload-area { border: 2px dashed #ddd; border-radius: 10px; padding: 18px; text-align: center; cursor: pointer; position: relative; transition: border .2s; }
+.img-upload-area:hover { border-color: var(--primary); }
+.img-upload-area input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.img-upload-label { font-size: 13px; color: #bbb; pointer-events: none; }
+.img-preview-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.img-preview-item { position: relative; width: 78px; height: 78px; }
+.img-preview-item img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; border: 1px solid #eee; }
+.img-remove-btn { position: absolute; top: -5px; right: -5px; background: #e74c3c; color: #fff; border: none; border-radius: 50%; width: 17px; height: 17px; font-size: 9px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+/* ── POST DETAIL ── */
+.detail-cat { font-size: 12px; padding: 3px 9px; border-radius: 4px; font-weight: 600; display: inline-block; margin-bottom: 8px; }
+.detail-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+.detail-meta { font-size: 13px; color: #888; display: flex; gap: 12px; flex-wrap: wrap; padding-bottom: 14px; border-bottom: 1px solid #f2f2f2; margin-bottom: 16px; }
+.detail-body { font-size: 15px; line-height: 1.7; color: #333; margin-bottom: 16px; white-space: pre-wrap; }
+.detail-images { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.detail-images img { max-width: 100%; border-radius: 8px; cursor: pointer; max-height: 320px; object-fit: contain; border: 1px solid #f0f0f0; }
+.detail-actions { display: flex; gap: 10px; margin-bottom: 20px; }
+.action-btn { padding: 7px 18px; border-radius: 20px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 13px; }
+.action-btn.liked { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+.comments-section { border-top: 1px solid #f2f2f2; padding-top: 16px; }
+.comment-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+.comment-item { padding: 10px 0; border-bottom: 1px solid #f8f8f8; }
+.comment-author { font-size: 13px; font-weight: 600; color: #555; }
+.comment-text { font-size: 14px; color: #333; margin-top: 4px; line-height: 1.5; }
+.comment-date { font-size: 12px; color: #bbb; margin-top: 3px; }
+.comment-input-row { display: flex; gap: 8px; margin-top: 14px; }
+.comment-input { flex: 1; padding: 9px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; }
+.comment-input:focus { border-color: var(--primary); }
+.comment-btn { padding: 9px 14px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; white-space: nowrap; }
+.admin-post-actions { display: flex; gap: 8px; margin-bottom: 12px; }
+.admin-del { padding: 5px 12px; background: #fff0f0; color: #c0392b; border: 1px solid #f5c6c6; border-radius: 6px; font-size: 12px; cursor: pointer; }
+.admin-edit-btn { padding: 5px 12px; background: var(--primary-light); color: var(--primary); border: 1px solid #c9c3f5; border-radius: 6px; font-size: 12px; cursor: pointer; }
+
+/* ── LIGHTBOX ── */
+.lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.88); z-index: 9999; align-items: center; justify-content: center; }
+.lightbox.show { display: flex; }
+.lightbox img { max-width: 92vw; max-height: 92vh; border-radius: 8px; }
+.lightbox-close { position: absolute; top: 18px; right: 22px; color: #fff; font-size: 30px; cursor: pointer; background: none; border: none; }
+
+/* ── ADMIN ── */
+.admin-page { max-width: 1100px; margin: 0 auto; padding: 20px 16px; }
+.admin-top { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
+.admin-section { background: #fff; border-radius: 10px; border: 1px solid #e8e8e8; padding: 20px; margin-bottom: 18px; }
+.admin-section-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; color: #333; border-bottom: 1px solid #f2f2f2; padding-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+.admin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.admin-table th { text-align: left; padding: 8px 10px; color: #888; font-weight: 500; border-bottom: 1px solid #f2f2f2; }
+.admin-table td { padding: 10px; border-bottom: 1px solid #f9f9f9; vertical-align: middle; }
+.admin-table tr:last-child td { border-bottom: none; }
+.admin-table tr:hover td { background: var(--primary-faint); }
+.td-title { max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #333; }
+.tag { font-size: 11px; padding: 2px 7px; border-radius: 4px; font-weight: 600; }
+.del-btn { padding: 4px 10px; background: #fff0f0; color: #c0392b; border: 1px solid #f5c6c6; border-radius: 5px; font-size: 12px; cursor: pointer; }
+.small-btn { padding: 6px 12px; background: var(--primary); color: #fff; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; }
+
+/* theme rows */
+.theme-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid #f5f5f5; flex-wrap: wrap; }
+.theme-row:last-child { border-bottom: none; }
+.theme-label { font-size: 13px; color: #555; min-width: 96px; font-weight: 500; }
+.color-input { width: 36px; height: 36px; border-radius: 8px; border: 1px solid #ddd; cursor: pointer; padding: 2px; background: none; }
+.swatches { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.swatch { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: border .15s; flex-shrink: 0; }
+.swatch:hover { border-color: #444; }
+.logo-upload-box { border: 1.5px dashed #ddd; border-radius: 8px; padding: 9px 14px; text-align: center; cursor: pointer; position: relative; font-size: 13px; color: #aaa; }
+.logo-upload-box input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.logo-cur { width: 40px; height: 40px; object-fit: contain; border-radius: 6px; border: 1px solid #eee; }
+
+/* PW */
+.pw-screen { display: flex; align-items: center; justify-content: center; min-height: 60vh; }
+.pw-box { background: #fff; border-radius: 14px; border: 1px solid #e8e8e8; padding: 36px 32px; max-width: 360px; width: 100%; text-align: center; }
+.pw-logo { font-size: 24px; font-weight: 700; color: var(--primary); margin-bottom: 6px; }
+.pw-sub { font-size: 14px; color: #888; margin-bottom: 24px; }
+.pw-input { width: 100%; padding: 11px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; margin-bottom: 12px; text-align: center; letter-spacing: 4px; outline: none; }
+.pw-input:focus { border-color: var(--primary); }
+.pw-btn { width: 100%; padding: 11px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; }
+.pw-error { color: #e74c3c; font-size: 13px; margin-top: 8px; display: none; }
+
+/* SETUP BANNER */
+.setup-banner { background: #fff8e1; border: 1px solid #ffe082; border-radius: 10px; padding: 14px 18px; margin: 12px 16px; font-size: 13px; color: #7c5e00; line-height: 1.6; }
+.setup-banner b { color: #5b4000; }
+.setup-banner code { background: #ffe082; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+
+/* LOADING */
+.loading-spinner { text-align: center; padding: 30px; color: #aaa; font-size: 14px; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 10px 22px; border-radius: 20px; font-size: 14px; z-index: 9998; opacity: 0; transition: opacity .3s; pointer-events: none; white-space: nowrap; }
+.toast.show { opacity: 1; }
+.hidden { display: none !important; }
+#page-main { display: block; }
+#page-admin { display: none; }
+
+/* EVENT COLOR DOTS */
+.ev-color { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a class="nav-logo" href="#" id="nav-logo-el">
+      <img class="hidden" id="nav-logo-img" src="" alt="">
+      <span id="nav-logo-text">자캐 커뮤니티</span>
+    </a>
+    <button class="nav-tab active" onclick="showBoard('free')">자유</button>
+    <button class="nav-tab" onclick="showBoard('anon')">익명</button>
+    <button class="nav-tab" onclick="showBoard('question')">질문</button>
+    <button class="nav-tab" onclick="showBoard('notice')">공지</button>
+    <button class="nav-tab" onclick="showPage('calendar')">📅 캘린더</button>
+    <div class="nav-right">
+      <span class="fb-status" id="fb-status-badge">⏳ 연결 중</span>
+      <button class="nav-admin-btn" onclick="showAdminLogin()" id="admin-nav-btn">관리자</button>
+    </div>
+  </div>
+</nav>
+
+<!-- SETUP BANNER (Firebase 미설정시 표시) -->
+<div class="setup-banner hidden" id="setup-banner">
+  🔧 <b>Firebase 설정이 필요합니다.</b> 아래 가이드를 따라 설정하면 30명이 함께 쓸 수 있어요!
+  &nbsp;→&nbsp; HTML 파일 상단 <code>firebaseConfig</code> 부분에 발급받은 키를 붙여넣으세요.
+  <a href="#" onclick="document.getElementById('setup-guide-modal').classList.add('show')" style="color:var(--primary);font-weight:600;margin-left:6px;">설정 가이드 보기 →</a>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close">✕</button>
+  <img id="lightbox-img" src="" alt="">
+</div>
+
+<!-- ══════════════ MAIN PAGE ══════════════ -->
+<div id="page-main">
+  <div class="container">
+    <div>
+      <!-- BANNER -->
+      <div class="banner-area">
+        <div class="banner">
+          <div class="banner-bg-color" id="banner-bg-color"></div>
+          <div class="banner-bg-img" id="banner-bg-img"></div>
+          <div class="banner-overlay" id="banner-overlay"></div>
+          <div class="banner-content">
+            <h2 id="banner-title">🎨 자캐 커뮤니티에 오신 걸 환영합니다!</h2>
+            <p id="banner-desc">창작 캐릭터들과 함께하는 우리만의 공간</p>
+            <div class="banner-dots" id="banner-dots"></div>
+          </div>
+        </div>
+      </div>
+      <!-- NOTICES -->
+      <div id="notice-bars"></div>
+      <!-- BOARD -->
+      <div class="board-header">
+        <span class="board-title" id="board-label">📋 자유게시판</span>
+        <button class="write-btn" onclick="openWriteModal()">✏️ 글쓰기</button>
+      </div>
+      <div class="post-list" id="post-list"><div class="loading-spinner">불러오는 중...</div></div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="side-card">
+        <div class="side-title">🔥 인기 게시글</div>
+        <div id="popular-list"></div>
+      </div>
+      <div class="side-card">
+        <div class="side-title">📊 커뮤니티 현황</div>
+        <div class="stat-grid">
+          <div class="stat-item"><div class="stat-num" id="stat-posts">0</div><div class="stat-label">전체 게시글</div></div>
+          <div class="stat-item"><div class="stat-num" id="stat-comments">0</div><div class="stat-label">전체 댓글</div></div>
+          <div class="stat-item"><div class="stat-num" id="stat-anon">0</div><div class="stat-label">익명 게시글</div></div>
+          <div class="stat-item"><div class="stat-num" id="stat-today">0</div><div class="stat-label">오늘 게시글</div></div>
+        </div>
+      </div>
+      <!-- MINI CALENDAR SIDEBAR -->
+      <div class="side-card">
+        <div class="side-title">📅 이번 달 일정</div>
+        <div id="sidebar-events"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ CALENDAR PAGE ══════════════ -->
+<div id="page-calendar" style="display:none;">
+  <div style="max-width:900px;margin:0 auto;padding:24px 16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <h2 style="font-size:20px;font-weight:700;color:#333;">📅 커뮤니티 일정</h2>
+      <button onclick="showPage('main')" style="padding:7px 14px;border:1px solid #ddd;border-radius:7px;background:#fff;cursor:pointer;font-size:13px;color:#555;">← 돌아가기</button>
+    </div>
+    <div style="background:#fff;border-radius:12px;border:1px solid #e8e8e8;padding:24px;">
+      <!-- Calendar Header -->
+      <div class="cal-header">
+        <button class="cal-nav" onclick="calPrev()">‹</button>
+        <span class="cal-month" id="cal-month-label"></span>
+        <button class="cal-nav" onclick="calNext()">›</button>
+      </div>
+      <!-- Days of week -->
+      <div class="cal-grid" id="cal-dow">
+        <div class="cal-dow">일</div><div class="cal-dow">월</div><div class="cal-dow">화</div>
+        <div class="cal-dow">수</div><div class="cal-dow">목</div><div class="cal-dow">금</div>
+        <div class="cal-dow" style="color:#4a90d9;">토</div>
+      </div>
+      <!-- Day cells -->
+      <div class="cal-grid" id="cal-days" style="margin-top:4px;"></div>
+      <!-- Selected day events -->
+      <div id="cal-day-detail" style="margin-top:20px;padding-top:16px;border-top:1px solid #f2f2f2;"></div>
+    </div>
+
+    <!-- All upcoming events list -->
+    <div style="background:#fff;border-radius:12px;border:1px solid #e8e8e8;padding:24px;margin-top:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <h3 style="font-size:15px;font-weight:700;color:#333;">📋 전체 일정 목록</h3>
+        <button class="small-btn hidden" id="add-event-btn" onclick="openEventModal()">+ 일정 추가</button>
+      </div>
+      <div id="all-events-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ ADMIN PAGE ══════════════ -->
+<div id="page-admin" style="display:none;">
+  <div id="admin-pw-screen" class="pw-screen">
+    <div class="pw-box">
+      <div class="pw-logo">🔐 관리자</div>
+      <div class="pw-sub">관리자 비밀번호를 입력하세요</div>
+      <input type="password" class="pw-input" id="pw-input" placeholder="••••••" onkeydown="if(event.key==='Enter')checkPw()">
+      <button class="pw-btn" onclick="checkPw()">입장</button>
+      <div class="pw-error" id="pw-error">비밀번호가 틀렸습니다.</div>
+    </div>
+  </div>
+
+  <div id="admin-panel" class="hidden">
+    <div class="admin-page">
+      <div class="admin-top">
+        <h1 style="font-size:22px;font-weight:700;color:var(--primary);">⚙️ 관리자 페이지</h1>
+        <button onclick="exitAdmin()" style="margin-left:auto;padding:7px 14px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:13px;color:#555;">나가기</button>
+      </div>
+
+      <!-- CUSTOMIZE -->
+      <div class="admin-section">
+        <div class="admin-section-title">🎨 사이트 커스터마이즈</div>
+        <div class="theme-row">
+          <span class="theme-label">🖼️ 로고 이미지</span>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <img id="logo-cur-img" class="logo-cur hidden" src="" alt="">
+            <div class="logo-upload-box"><input type="file" accept="image/*" onchange="uploadLogo(this)">📁 로고 업로드</div>
+            <button onclick="removeLogo()" style="font-size:12px;color:#e74c3c;background:none;border:none;cursor:pointer;">제거</button>
+          </div>
+        </div>
+        <div class="theme-row">
+          <span class="theme-label">✏️ 사이트 이름</span>
+          <div style="display:flex;gap:8px;flex:1;max-width:320px;">
+            <input type="text" class="form-input" id="site-name-input" value="자캐 커뮤니티">
+            <button class="small-btn" onclick="saveSiteName()">저장</button>
+          </div>
+        </div>
+        <div class="theme-row">
+          <span class="theme-label">🎨 메인 컬러</span>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <input type="color" class="color-input" id="color-picker" value="#5b4fcf" oninput="applyColor(this.value)">
+            <div class="swatches">
+              <div class="swatch" style="background:#5b4fcf" onclick="applyColor('#5b4fcf')"></div>
+              <div class="swatch" style="background:#e91e8c" onclick="applyColor('#e91e8c')"></div>
+              <div class="swatch" style="background:#0ea5e9" onclick="applyColor('#0ea5e9')"></div>
+              <div class="swatch" style="background:#10b981" onclick="applyColor('#10b981')"></div>
+              <div class="swatch" style="background:#f59e0b" onclick="applyColor('#f59e0b')"></div>
+              <div class="swatch" style="background:#ef4444" onclick="applyColor('#ef4444')"></div>
+              <div class="swatch" style="background:#8b5cf6" onclick="applyColor('#8b5cf6')"></div>
+              <div class="swatch" style="background:#334155" onclick="applyColor('#334155')"></div>
+            </div>
+          </div>
+        </div>
+        <div class="theme-row">
+          <span class="theme-label">🌄 배경색</span>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <input type="color" class="color-input" id="bg-picker" value="#f5f5f5" oninput="applyBgColor(this.value)">
+            <div class="swatches">
+              <div class="swatch" style="background:#f5f5f5;border:1px solid #ddd" onclick="applyBgColor('#f5f5f5')"></div>
+              <div class="swatch" style="background:#fff;border:1px solid #ddd" onclick="applyBgColor('#fff')"></div>
+              <div class="swatch" style="background:#f0f4ff" onclick="applyBgColor('#f0f4ff')"></div>
+              <div class="swatch" style="background:#fdf2f8" onclick="applyBgColor('#fdf2f8')"></div>
+              <div class="swatch" style="background:#f0fdf4" onclick="applyBgColor('#f0fdf4')"></div>
+              <div class="swatch" style="background:#1e1e2e" onclick="applyBgColor('#1e1e2e')"></div>
+            </div>
+          </div>
+        </div>
+        <p style="font-size:12px;color:#aaa;margin-top:12px;">* 테마 설정은 Firebase에 저장되어 모든 사용자에게 적용됩니다.</p>
+      </div>
+
+      <!-- BANNER ADMIN -->
+      <div class="admin-section">
+        <div class="admin-section-title">🖼️ 배너 관리 <button class="small-btn" onclick="openBannerModal()">+ 배너 수정</button></div>
+        <div id="banner-admin-list"></div>
+      </div>
+
+      <!-- NOTICE ADMIN -->
+      <div class="admin-section">
+        <div class="admin-section-title">📢 공지 관리 <button class="small-btn" onclick="openNoticeModal()">+ 공지 추가</button></div>
+        <div id="notice-admin-list"></div>
+      </div>
+
+      <!-- EVENT ADMIN -->
+      <div class="admin-section">
+        <div class="admin-section-title">📅 일정 관리 <button class="small-btn" onclick="openEventModal()">+ 일정 추가</button></div>
+        <div id="event-admin-list"></div>
+      </div>
+
+      <!-- POST ADMIN -->
+      <div class="admin-section">
+        <div class="admin-section-title">📋 게시글 관리</div>
+        <table class="admin-table">
+          <thead><tr><th>분류</th><th>제목</th><th>작성자</th><th>날짜</th><th>♥</th><th>삭제</th></tr></thead>
+          <tbody id="admin-post-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODALS ══════════════ -->
+
+<!-- WRITE -->
+<div class="modal-bg" id="write-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('write-modal')">✕</button>
+    <div class="modal-title">✏️ 게시글 작성</div>
+    <div class="form-group"><label class="form-label">게시판</label>
+      <select class="form-select" id="write-cat">
+        <option value="free">자유게시판</option><option value="anon">익명게시판</option><option value="question">질문게시판</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">제목</label><input type="text" class="form-input" id="write-title" placeholder="제목을 입력하세요"></div>
+    <div class="form-group"><label class="form-label">내용</label><textarea class="form-textarea" id="write-body" placeholder="내용을 입력하세요..."></textarea></div>
+    <div class="form-group"><label class="form-label">작성자</label><input type="text" class="form-input" id="write-author" placeholder="닉네임 (익명게시판은 자동 처리)"></div>
+    <div class="form-group">
+      <label class="form-label">📷 이미지 첨부 (최대 5장)</label>
+      <div class="img-upload-area"><input type="file" accept="image/*" multiple onchange="handleImgUpload(this,'write')"><div class="img-upload-label">클릭하여 이미지 선택</div></div>
+      <div class="img-preview-list" id="write-preview"></div>
+    </div>
+    <button class="submit-btn" onclick="submitPost()">게시하기</button>
+  </div>
+</div>
+
+<!-- DETAIL -->
+<div class="modal-bg" id="detail-modal">
+  <div class="modal" style="max-width:640px;"><button class="modal-close" onclick="closeModal('detail-modal')">✕</button><div id="detail-content"></div></div>
+</div>
+
+<!-- NOTICE MODAL -->
+<div class="modal-bg" id="notice-modal">
+  <div class="modal" style="max-width:500px;">
+    <button class="modal-close" onclick="closeModal('notice-modal')">✕</button>
+    <div class="modal-title">📢 공지 추가</div>
+    <div class="form-group"><label class="form-label">공지 내용</label><input type="text" class="form-input" id="notice-text-input" placeholder="공지 내용을 입력하세요"></div>
+    <div class="form-group">
+      <label class="form-label">📷 이미지 (선택)</label>
+      <div class="img-upload-area"><input type="file" accept="image/*" onchange="handleSingleImg(this,'notice-preview','notice-img-val')"><div class="img-upload-label">클릭하여 이미지 선택</div></div>
+      <input type="hidden" id="notice-img-val"><div id="notice-preview" style="margin-top:8px;"></div>
+    </div>
+    <button class="submit-btn" onclick="addNotice()">추가하기</button>
+  </div>
+</div>
+
+<!-- BANNER MODAL -->
+<div class="modal-bg" id="banner-modal">
+  <div class="modal" style="max-width:500px;">
+    <button class="modal-close" onclick="closeModal('banner-modal')">✕</button>
+    <div class="modal-title">🖼️ 배너 수정</div>
+    <div class="form-group"><label class="form-label">배너 번호</label>
+      <select class="form-select" id="banner-idx"><option value="0">배너 1</option><option value="1">배너 2</option><option value="2">배너 3</option></select>
+    </div>
+    <div class="form-group"><label class="form-label">제목</label><input type="text" class="form-input" id="banner-title-input" placeholder="배너 제목"></div>
+    <div class="form-group"><label class="form-label">설명</label><input type="text" class="form-input" id="banner-desc-input" placeholder="배너 설명"></div>
+    <div class="form-group">
+      <label class="form-label">📷 배경 이미지 (선택)</label>
+      <div class="img-upload-area"><input type="file" accept="image/*" onchange="handleSingleImg(this,'banner-img-preview','banner-img-val')"><div class="img-upload-label">클릭하여 이미지 선택</div></div>
+      <input type="hidden" id="banner-img-val"><div id="banner-img-preview" style="margin-top:8px;"></div>
+    </div>
+    <button class="submit-btn" onclick="saveBanner()">저장하기</button>
+  </div>
+</div>
+
+<!-- EDIT POST MODAL -->
+<div class="modal-bg" id="edit-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('edit-modal')">✕</button>
+    <div class="modal-title">📝 게시글 수정</div>
+    <input type="hidden" id="edit-id">
+    <div class="form-group"><label class="form-label">제목</label><input type="text" class="form-input" id="edit-title"></div>
+    <div class="form-group"><label class="form-label">내용</label><textarea class="form-textarea" id="edit-body"></textarea></div>
+    <div class="form-group">
+      <label class="form-label">📷 이미지</label>
+      <div class="img-upload-area"><input type="file" accept="image/*" multiple onchange="handleImgUpload(this,'edit')"><div class="img-upload-label">이미지 추가</div></div>
+      <div class="img-preview-list" id="edit-preview"></div>
+    </div>
+    <button class="submit-btn" onclick="saveEdit()">수정 완료</button>
+  </div>
+</div>
+
+<!-- EVENT MODAL -->
+<div class="modal-bg" id="event-modal">
+  <div class="modal" style="max-width:460px;">
+    <button class="modal-close" onclick="closeModal('event-modal')">✕</button>
+    <div class="modal-title" id="event-modal-title">📅 일정 추가</div>
+    <input type="hidden" id="event-edit-id">
+    <div class="form-group"><label class="form-label">일정 제목</label><input type="text" class="form-input" id="event-title" placeholder="예: 자캐 품평회, 정기 모임"></div>
+    <div class="form-group"><label class="form-label">날짜</label><input type="date" class="form-input" id="event-date"></div>
+    <div class="form-group"><label class="form-label">시간 (선택)</label><input type="time" class="form-input" id="event-time"></div>
+    <div class="form-group"><label class="form-label">설명 (선택)</label><textarea class="form-textarea" id="event-desc" placeholder="일정에 대한 설명..." style="min-height:80px;"></textarea></div>
+    <div class="form-group">
+      <label class="form-label">색상</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;" id="event-color-swatches">
+        <div class="swatch" style="background:#5b4fcf" data-color="#5b4fcf" onclick="selectEventColor('#5b4fcf')"></div>
+        <div class="swatch" style="background:#e91e8c" data-color="#e91e8c" onclick="selectEventColor('#e91e8c')"></div>
+        <div class="swatch" style="background:#0ea5e9" data-color="#0ea5e9" onclick="selectEventColor('#0ea5e9')"></div>
+        <div class="swatch" style="background:#10b981" data-color="#10b981" onclick="selectEventColor('#10b981')"></div>
+        <div class="swatch" style="background:#f59e0b" data-color="#f59e0b" onclick="selectEventColor('#f59e0b')"></div>
+        <div class="swatch" style="background:#ef4444" data-color="#ef4444" onclick="selectEventColor('#ef4444')"></div>
+      </div>
+      <input type="hidden" id="event-color" value="#5b4fcf">
+    </div>
+    <button class="submit-btn" id="event-submit-btn" onclick="submitEvent()">일정 추가</button>
+  </div>
+</div>
+
+<!-- SETUP GUIDE MODAL -->
+<div class="modal-bg" id="setup-guide-modal">
+  <div class="modal" style="max-width:600px;">
+    <button class="modal-close" onclick="closeModal('setup-guide-modal')">✕</button>
+    <div class="modal-title">🔧 Firebase 설정 가이드</div>
+    <div style="font-size:14px;line-height:1.8;color:#333;">
+      <div style="background:#f8f7fe;border-radius:8px;padding:14px;margin-bottom:14px;">
+        <b style="color:var(--primary);">총 소요 시간: 약 10~15분 (개발 경험 불필요)</b>
+      </div>
+
+      <p style="font-weight:600;margin-bottom:6px;">① Firebase 프로젝트 만들기</p>
+      <ol style="padding-left:18px;margin-bottom:12px;color:#555;">
+        <li><a href="https://console.firebase.google.com" target="_blank" style="color:var(--primary);">console.firebase.google.com</a> 접속 → Google 계정 로그인</li>
+        <li>「프로젝트 추가」 클릭 → 이름 입력 (예: jakae-community) → 계속</li>
+        <li>Google 애널리틱스 비활성화 → 「프로젝트 만들기」</li>
+      </ol>
+
+      <p style="font-weight:600;margin-bottom:6px;">② 웹 앱 등록 및 설정 키 복사</p>
+      <ol style="padding-left:18px;margin-bottom:12px;color:#555;">
+        <li>프로젝트 홈 → 「&lt;/&gt; 웹 앱 추가」 클릭</li>
+        <li>앱 닉네임 입력 → 「앱 등록」</li>
+        <li>화면에 표시되는 <code style="background:#f0f0f0;padding:1px 5px;border-radius:3px;">firebaseConfig</code> 내용 전체 복사</li>
+        <li>이 HTML 파일 상단 <code style="background:#f0f0f0;padding:1px 5px;border-radius:3px;">firebaseConfig</code> 부분에 붙여넣기</li>
+      </ol>
+
+      <p style="font-weight:600;margin-bottom:6px;">③ Firestore 데이터베이스 활성화</p>
+      <ol style="padding-left:18px;margin-bottom:12px;color:#555;">
+        <li>왼쪽 메뉴 「Firestore Database」 → 「데이터베이스 만들기」</li>
+        <li>「테스트 모드에서 시작」 선택 → 위치 asia-northeast3 (Seoul) → 「완료」</li>
+      </ol>
+
+      <p style="font-weight:600;margin-bottom:6px;">④ Storage 활성화 (이미지 업로드용)</p>
+      <ol style="padding-left:18px;margin-bottom:12px;color:#555;">
+        <li>왼쪽 메뉴 「Storage」 → 「시작하기」</li>
+        <li>「테스트 모드에서 시작」 → 위치 확인 → 「완료」</li>
+      </ol>
+
+      <p style="font-weight:600;margin-bottom:6px;">⑤ 완료!</p>
+      <p style="color:#555;">설정 후 HTML 파일을 저장하고 브라우저를 새로고침하면 상단에 <span style="background:#e8f5e9;color:#2e7d32;padding:1px 6px;border-radius:4px;font-size:12px;">✅ Firebase 연결됨</span> 표시가 나타납니다.</p>
+
+      <div style="background:#fff3e0;border-radius:8px;padding:12px;margin-top:14px;font-size:13px;color:#7c5e00;">
+        💡 <b>무료 한도:</b> Firebase 무료 플랜(Spark)으로 하루 5만 읽기 / 2만 쓰기 가능 → 30명 소규모 커뮤니티엔 충분합니다!
+      </div>
+    </div>
+    <button class="submit-btn" onclick="closeModal('setup-guide-modal')" style="margin-top:16px;">닫기</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+//  APP STATE & CONFIG
+// ══════════════════════════════════════
+const ADMIN_PW = "admin1234";
+const EVENT_COLORS = ['#5b4fcf','#e91e8c','#0ea5e9','#10b981','#f59e0b','#ef4444'];
+
+let pendingImgs = { write: [], edit: [] };
+let selectedEventColor = '#5b4fcf';
+let calYear, calMonth, calSelectedDate;
+let unsubPosts = null;
+
+// Local fallback state (Firebase 없을 때)
+let local = {
+  posts: [
+    { id:'p1', cat:'free', title:'자캐 커뮤니티 오픈을 축하해요!', body:'드디어 우리만의 커뮤니티가 생겼네요. 반갑습니다 여러분! 🎉', author:'운영진', date:'2024-01-15', likes:42, liked:false, images:[], comments:[{author:'별빛',text:'와 너무 기뻐요!!',date:'2024-01-15'},{author:'익명',text:'반갑습니다~',date:'2024-01-15'}] },
+    { id:'p2', cat:'anon', title:'자캐 소개해주세요', body:'다들 자캐 어떤 설정으로 만드셨나요? 저는 판타지 세계관 마법사로 만들었어요!', author:'익명', date:'2024-01-16', likes:28, liked:false, images:[], comments:[{author:'익명',text:'저는 카페 직원이에요 ㅎㅎ',date:'2024-01-16'}] },
+    { id:'p3', cat:'question', title:'자캐 그림 처음 그리는데 팁이 있을까요?', body:'입문자도 쉽게 따라할 수 있는 팁 알려주세요!', author:'새싹이', date:'2024-01-17', likes:15, liked:false, images:[], comments:[] },
+    { id:'p4', cat:'notice', title:'[공지] 커뮤니티 이용 규칙 안내', body:'1. 서로 존중해주세요.\n2. 타인의 자캐를 무단 사용하지 마세요.', author:'운영진', date:'2024-01-15', likes:8, liked:false, images:[], comments:[] },
+  ],
+  notices: [
+    { id:'n1', text:'[공지] 커뮤니티 이용 규칙을 확인해주세요!', date:'2024-01-15', image:null },
+    { id:'n2', text:'🎉 자캐 커뮤니티 오픈 기념 이벤트 진행 중!', date:'2024-01-16', image:null },
+  ],
+  banners: [
+    { title:'🎨 자캐 커뮤니티에 오신 걸 환영합니다!', desc:'창작 캐릭터들과 함께하는 우리만의 공간', image:null },
+    { title:'✨ 자캐 소개 이벤트 진행 중!', desc:'나만의 캐릭터를 자유게시판에 소개해보세요', image:null },
+    { title:'📢 더 많은 기능이 준비 중이에요', desc:'앞으로도 잘 부탁드려요!', image:null },
+  ],
+  events: [
+    { id:'e1', title:'자캐 품평회', date: getTodayStr(7), time:'19:00', desc:'서로의 자캐를 소개하는 시간!', color:'#5b4fcf' },
+    { id:'e2', title:'정기 모임', date: getTodayStr(14), time:'20:00', desc:'격주 정기 모임', color:'#10b981' },
+  ],
+  nextId: 10,
+  currentBanner: 0,
+  currentBoard: 'free',
+  isAdmin: false,
+};
+
+function getTodayStr(addDays = 0) {
+  const d = new Date(); d.setDate(d.getDate() + addDays);
+  return d.toISOString().slice(0, 10);
+}
+
+const FB = () => window.__fb;
+const fbReady = () => window.__fb && window.__fb.ready;
+
+const catInfo = {
+  free:{label:'자유',cls:'cat-free'}, anon:{label:'익명',cls:'cat-anon'},
+  notice:{label:'공지',cls:'cat-notice'}, question:{label:'질문',cls:'cat-question'}
+};
+const boardLabels = {
+  free:'📋 자유게시판', anon:'🎭 익명게시판',
+  question:'❓ 질문게시판', notice:'📢 공지사항'
+};
+
+// ══════════════════════════════════════
+//  FIREBASE HELPERS
+// ══════════════════════════════════════
+async function fbAddDoc(col, data) {
+  if (!fbReady()) return null;
+  const f = FB();
+  return await f.addDoc(f.collection(f.db, col), { ...data, createdAt: f.serverTimestamp() });
+}
+async function fbGetDocs(col, ...constraints) {
+  if (!fbReady()) return [];
+  const f = FB();
+  let q = f.collection(f.db, col);
+  if (constraints.length) q = f.query(q, ...constraints);
+  const snap = await f.getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+async function fbDeleteDoc(col, id) {
+  if (!fbReady()) return;
+  const f = FB();
+  await f.deleteDoc(f.doc(f.db, col, id));
+}
+async function fbUpdateDoc(col, id, data) {
+  if (!fbReady()) return;
+  const f = FB();
+  await f.updateDoc(f.doc(f.db, col, id), data);
+}
+function fbOnSnapshot(col, orderField, cb) {
+  if (!fbReady()) return null;
+  const f = FB();
+  const q = f.query(f.collection(f.db, col), f.orderBy(orderField, 'desc'));
+  return f.onSnapshot(q, snap => {
+    cb(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  });
+}
+
+// Upload base64 image to Firebase Storage, return URL
+async function fbUploadImg(base64, path) {
+  if (!fbReady()) return base64; // fallback: use base64 directly
+  const f = FB();
+  const storageRef = f.ref(f.storage, path);
+  await f.uploadString(storageRef, base64, 'data_url');
+  return await f.getDownloadURL(storageRef);
+}
+
+// Upload all pending images, return URLs
+async function uploadImages(key) {
+  const imgs = pendingImgs[key];
+  if (!imgs.length) return [];
+  const urls = [];
+  for (let i = 0; i < imgs.length; i++) {
+    const path = `images/${Date.now()}_${i}`;
+    const url = await fbUploadImg(imgs[i], path);
+    urls.push(url);
+  }
+  return urls;
+}
+
+// ══════════════════════════════════════
+//  THEME
+// ══════════════════════════════════════
+function applyColor(hex) {
+  document.getElementById('color-picker').value = hex;
+  const r = document.documentElement;
+  r.style.setProperty('--primary', hex);
+  r.style.setProperty('--primary-hover', shadeColor(hex, -12));
+  r.style.setProperty('--primary-light', hexA(hex, 0.10));
+  r.style.setProperty('--primary-faint', hexA(hex, 0.05));
+  if (fbReady()) fbUpdateDoc('settings', 'theme', { primaryColor: hex }).catch(()=>{});
+}
+function applyBgColor(hex) {
+  document.getElementById('bg-picker').value = hex;
+  document.documentElement.style.setProperty('--body-bg', hex);
+  if (fbReady()) fbUpdateDoc('settings', 'theme', { bgColor: hex }).catch(()=>{});
+}
+function shadeColor(hex, p) {
+  const n=parseInt(hex.slice(1),16),f=p/100;
+  return '#'+[n>>16,(n>>8)&255,n&255].map(v=>Math.min(255,Math.max(0,v+Math.round(255*f))).toString(16).padStart(2,'0')).join('');
+}
+function hexA(hex, a) {
+  const n=parseInt(hex.slice(1),16);
+  return `rgba(${n>>16},${(n>>8)&255},${n&255},${a})`;
+}
+function saveSiteName() {
+  const name = document.getElementById('site-name-input').value.trim();
+  if (!name) return;
+  document.getElementById('nav-logo-text').textContent = name;
+  document.title = name;
+  if (fbReady()) fbUpdateDoc('settings', 'theme', { siteName: name }).catch(()=>{});
+  showToast('사이트 이름이 저장되었습니다!');
+}
+function uploadLogo(input) {
+  const file = input.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = async e => {
+    const src = e.target.result;
+    document.getElementById('nav-logo-img').src = src;
+    document.getElementById('nav-logo-img').classList.remove('hidden');
+    document.getElementById('logo-cur-img').src = src;
+    document.getElementById('logo-cur-img').classList.remove('hidden');
+    if (fbReady()) {
+      const url = await fbUploadImg(src, 'settings/logo');
+      await fbUpdateDoc('settings', 'theme', { logoUrl: url });
+    }
+    showToast('로고가 업로드되었습니다!');
+  };
+  r.readAsDataURL(file);
+}
+function removeLogo() {
+  document.getElementById('nav-logo-img').classList.add('hidden');
+  document.getElementById('logo-cur-img').classList.add('hidden');
+  if (fbReady()) fbUpdateDoc('settings', 'theme', { logoUrl: null }).catch(()=>{});
+  showToast('로고가 제거되었습니다.');
+}
+async function loadTheme() {
+  if (!fbReady()) return;
+  try {
+    const docs = await fbGetDocs('settings');
+    const theme = docs.find(d => d.id === 'theme');
+    if (!theme) return;
+    if (theme.primaryColor) applyColor(theme.primaryColor);
+    if (theme.bgColor) applyBgColor(theme.bgColor);
+    if (theme.siteName) { document.getElementById('nav-logo-text').textContent = theme.siteName; document.title = theme.siteName; }
+    if (theme.logoUrl) { document.getElementById('nav-logo-img').src = theme.logoUrl; document.getElementById('nav-logo-img').classList.remove('hidden'); }
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════
+//  IMAGE HELPERS
+// ══════════════════════════════════════
+function handleImgUpload(input, key) {
+  const files = Array.from(input.files);
+  const rem = 5 - pendingImgs[key].length;
+  if (rem <= 0) { showToast('최대 5장까지 첨부 가능합니다.'); return; }
+  files.slice(0, rem).forEach(file => {
+    const r = new FileReader();
+    r.onload = e => { pendingImgs[key].push(e.target.result); renderPreviews(key); };
+    r.readAsDataURL(file);
+  });
+  input.value = '';
+}
+function renderPreviews(key) {
+  const el = document.getElementById(key === 'write' ? 'write-preview' : 'edit-preview');
+  el.innerHTML = pendingImgs[key].map((src, i) =>
+    `<div class="img-preview-item"><img src="${src}" alt=""><button class="img-remove-btn" onclick="removeImg('${key}',${i})">✕</button></div>`
+  ).join('');
+}
+function removeImg(key, idx) { pendingImgs[key].splice(idx, 1); renderPreviews(key); }
+function handleSingleImg(input, previewId, valId) {
+  const file = input.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    document.getElementById(valId).value = e.target.result;
+    document.getElementById(previewId).innerHTML = `<img src="${e.target.result}" style="max-width:100%;max-height:90px;border-radius:6px;border:1px solid #eee;">`;
+  };
+  r.readAsDataURL(file); input.value = '';
+}
+
+// ══════════════════════════════════════
+//  RENDER HELPERS
+// ══════════════════════════════════════
+function timeAgo(d) {
+  const diff = Math.floor((Date.now() - new Date(d)) / 86400000);
+  return diff === 0 ? '오늘' : diff === 1 ? '어제' : d;
+}
+
+function getPosts() {
+  return fbReady() ? window._fbPosts || [] : local.posts;
+}
+function getNotices() { return fbReady() ? window._fbNotices || [] : local.notices; }
+function getBanners() { return fbReady() ? window._fbBanners || local.banners : local.banners; }
+function getEvents() { return fbReady() ? window._fbEvents || [] : local.events; }
+
+function renderPostList() {
+  const posts = getPosts().filter(p => p.cat === local.currentBoard);
+  const el = document.getElementById('post-list');
+  document.getElementById('board-label').textContent = boardLabels[local.currentBoard];
+  document.querySelectorAll('.nav-tab').forEach((t, i) => t.classList.toggle('active', ['free','anon','question','notice','calendar'][i] === local.currentBoard));
+  if (!posts.length) { el.innerHTML = '<div class="empty">아직 게시글이 없어요. 첫 글을 작성해보세요!</div>'; return; }
+  el.innerHTML = posts.map(p => {
+    const cat = catInfo[p.cat];
+    const thumb = p.images && p.images[0] ? `<img class="post-thumb" src="${p.images[0]}" alt="">` : '';
+    const imgBadge = p.images && p.images.length ? ` <span style="font-size:11px;color:#aaa;">📷${p.images.length}</span>` : '';
+    return `<div class="post-item" onclick="openDetail('${p.id}')">
+      <div style="display:flex;gap:10px;align-items:flex-start;flex:1;">
+        <div style="flex:1;"><span class="post-cat ${cat.cls}">${cat.label}</span>
+          <div class="post-title">${p.title}${imgBadge}</div>
+          <div class="post-meta"><span>${p.cat==='anon'?'🎭 익명':p.author}</span><span>${timeAgo(p.date)}</span><span>댓글 ${(p.comments||[]).length}</span></div>
+        </div>${thumb}
+      </div>
+      <div class="post-right"><span class="post-likes">♥ ${p.likes||0}</span></div>
+    </div>`;
+  }).join('');
+}
+
+function renderNoticeBars() {
+  document.getElementById('notice-bars').innerHTML = getNotices().map(n =>
+    `<div class="notice-bar"><span class="notice-label">공지</span>${n.image?`<img class="notice-thumb" src="${n.image}" alt="">`:''}
+    <span class="notice-text">${n.text}</span><span class="notice-date">${n.date}</span></div>`
+  ).join('');
+}
+
+function renderPopular() {
+  const sorted = [...getPosts()].sort((a, b) => (b.likes||0) - (a.likes||0)).slice(0, 5);
+  document.getElementById('popular-list').innerHTML = sorted.length
+    ? sorted.map((p, i) => `<div class="popular-item" onclick="openDetail('${p.id}')"><span class="popular-num">${i+1}</span><span class="popular-text">${p.title}</span></div>`).join('')
+    : '<div style="font-size:13px;color:#bbb;">아직 게시글이 없어요.</div>';
+}
+
+function renderStats() {
+  const posts = getPosts();
+  const today = new Date().toISOString().slice(0, 10);
+  document.getElementById('stat-posts').textContent = posts.length;
+  document.getElementById('stat-comments').textContent = posts.reduce((a, p) => a + (p.comments||[]).length, 0);
+  document.getElementById('stat-anon').textContent = posts.filter(p => p.cat === 'anon').length;
+  document.getElementById('stat-today').textContent = posts.filter(p => p.date === today).length;
+}
+
+function renderBanner() {
+  const banners = getBanners();
+  if (!banners.length) return;
+  const b = banners[local.currentBanner % banners.length];
+  document.getElementById('banner-title').textContent = b.title;
+  document.getElementById('banner-desc').textContent = b.desc;
+  const bgImg = document.getElementById('banner-bg-img');
+  const overlay = document.getElementById('banner-overlay');
+  const bgColor = document.getElementById('banner-bg-color');
+  if (b.image) {
+    bgImg.style.backgroundImage = `url(${b.image})`; bgImg.style.display = 'block';
+    overlay.style.display = 'block'; bgColor.style.display = 'none';
+  } else {
+    bgImg.style.display = 'none'; overlay.style.display = 'none'; bgColor.style.display = 'block';
+  }
+  document.getElementById('banner-dots').innerHTML = banners.map((_, i) =>
+    `<div class="banner-dot${i === local.currentBanner % banners.length ? ' active' : ''}" onclick="changeBanner(${i})"></div>`
+  ).join('');
+}
+
+function renderSidebarEvents() {
+  const today = new Date().toISOString().slice(0, 10);
+  const upcoming = getEvents().filter(e => e.date >= today).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 4);
+  const el = document.getElementById('sidebar-events');
+  if (!upcoming.length) { el.innerHTML = '<div style="font-size:13px;color:#bbb;">예정된 일정이 없어요.</div>'; return; }
+  el.innerHTML = upcoming.map(e =>
+    `<div class="cal-event-item">
+      <div class="cal-event-dot" style="background:${e.color||'var(--primary)'}"></div>
+      <div class="cal-event-info">
+        <div class="cal-event-title">${e.title}</div>
+        <div class="cal-event-date">${e.date}${e.time?' '+e.time:''}</div>
+      </div>
+    </div>`
+  ).join('');
+}
+
+function render() {
+  renderPostList(); renderNoticeBars(); renderPopular(); renderStats(); renderBanner(); renderSidebarEvents();
+}
+
+function showBoard(cat) { local.currentBoard = cat; showPage('main'); renderPostList(); }
+
+// ══════════════════════════════════════
+//  PAGE NAVIGATION
+// ══════════════════════════════════════
+function showPage(page) {
+  document.getElementById('page-main').style.display = page === 'main' ? 'block' : 'none';
+  document.getElementById('page-calendar').style.display = page === 'calendar' ? 'block' : 'none';
+  document.getElementById('page-admin').style.display = page === 'admin' ? 'block' : 'none';
+  if (page === 'calendar') renderCalendar();
+  document.querySelectorAll('.nav-tab').forEach((t, i) => {
+    const names = ['free','anon','question','notice','calendar'];
+    t.classList.toggle('active', names[i] === (page === 'calendar' ? 'calendar' : local.currentBoard));
+  });
+}
+
+// ══════════════════════════════════════
+//  CALENDAR
+// ══════════════════════════════════════
+function initCal() {
+  const now = new Date();
+  calYear = now.getFullYear(); calMonth = now.getMonth();
+  calSelectedDate = now.toISOString().slice(0, 10);
+}
+function calPrev() { calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } renderCalendar(); }
+function calNext() { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar(); }
+
+function renderCalendar() {
+  const events = getEvents();
+  const now = new Date();
+  const todayStr = now.toISOString().slice(0, 10);
+  const label = `${calYear}년 ${calMonth + 1}월`;
+  document.getElementById('cal-month-label').textContent = label;
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const prevDays = new Date(calYear, calMonth, 0).getDate();
+
+  // Build event date set
+  const eventDates = new Set(events.map(e => e.date));
+
+  let cells = '';
+  // prev month padding
+  for (let i = firstDay - 1; i >= 0; i--) {
+    cells += `<div class="cal-day other-month">${prevDays - i}</div>`;
+  }
+  // current month
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dow = new Date(calYear, calMonth, d).getDay();
+    let cls = 'cal-day';
+    if (dateStr === todayStr) cls += ' today';
+    if (eventDates.has(dateStr)) cls += ' has-event';
+    if (dow === 0) cls += ' sun';
+    if (dow === 6) cls += ' sat';
+    cells += `<div class="${cls}" onclick="selectCalDay('${dateStr}')">${d}</div>`;
+  }
+  // next month padding
+  const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+  for (let d = 1; d <= totalCells - firstDay - daysInMonth; d++) {
+    cells += `<div class="cal-day other-month">${d}</div>`;
+  }
+  document.getElementById('cal-days').innerHTML = cells;
+  renderCalDayDetail(calSelectedDate);
+  renderAllEventsList();
+}
+
+function selectCalDay(dateStr) {
+  calSelectedDate = dateStr; renderCalendar();
+}
+
+function renderCalDayDetail(dateStr) {
+  const dayEvents = getEvents().filter(e => e.date === dateStr);
+  const el = document.getElementById('cal-day-detail');
+  const dateLabel = dateStr ? new Date(dateStr + 'T00:00:00').toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' }) : '';
+  if (!dayEvents.length) {
+    el.innerHTML = `<div style="font-size:13px;color:#bbb;text-align:center;padding:8px;">${dateLabel} — 등록된 일정이 없어요${local.isAdmin ? ' (<a href="#" onclick="openEventModal(\''+dateStr+'\')" style="color:var(--primary);">추가</a>)' : ''}.</div>`;
+    return;
+  }
+  el.innerHTML = `<div style="font-size:13px;font-weight:600;margin-bottom:10px;color:#333;">${dateLabel} 일정</div>` +
+    dayEvents.map(e => `
+      <div style="display:flex;align-items:flex-start;gap:10px;padding:10px;background:#fafafa;border-radius:8px;margin-bottom:8px;border-left:3px solid ${e.color||'var(--primary)'}">
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:600;color:#333;">${e.title}</div>
+          ${e.time?`<div style="font-size:12px;color:#888;margin-top:2px;">⏰ ${e.time}</div>`:''}
+          ${e.desc?`<div style="font-size:13px;color:#555;margin-top:4px;">${e.desc}</div>`:''}
+        </div>
+        ${local.isAdmin ? `<button class="cal-event-del" onclick="deleteEvent('${e.id}')">🗑</button><button style="background:none;border:none;color:var(--primary);cursor:pointer;font-size:12px;" onclick="openEditEventModal('${e.id}')">✏️</button>` : ''}
+      </div>`
+    ).join('');
+}
+
+function renderAllEventsList() {
+  const today = new Date().toISOString().slice(0, 10);
+  const sorted = [...getEvents()].sort((a, b) => a.date.localeCompare(b.date));
+  const el = document.getElementById('all-events-list');
+  if (!sorted.length) { el.innerHTML = '<div style="font-size:13px;color:#bbb;">등록된 일정이 없어요.</div>'; return; }
+  el.innerHTML = sorted.map(e => {
+    const isPast = e.date < today;
+    return `<div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid #f5f5f5;opacity:${isPast?'.45':'1'}">
+      <div class="cal-event-dot" style="background:${e.color||'var(--primary)'};margin-top:4px;width:10px;height:10px;border-radius:50%;flex-shrink:0;"></div>
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:600;color:#333;">${e.title}${isPast?' <span style="font-size:11px;color:#aaa;">(종료)</span>':''}</div>
+        <div style="font-size:12px;color:#888;margin-top:2px;">${e.date}${e.time?' '+e.time:''}</div>
+        ${e.desc?`<div style="font-size:13px;color:#555;margin-top:3px;">${e.desc}</div>`:''}
+      </div>
+      ${local.isAdmin ? `<div style="display:flex;gap:6px;"><button class="cal-event-del" onclick="deleteEvent('${e.id}')">🗑</button><button style="background:none;border:none;color:var(--primary);cursor:pointer;font-size:12px;" onclick="openEditEventModal('${e.id}')">✏️</button></div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function selectEventColor(hex) {
+  selectedEventColor = hex;
+  document.getElementById('event-color').value = hex;
+  document.querySelectorAll('#event-color-swatches .swatch').forEach(s => {
+    s.style.border = s.dataset.color === hex ? '3px solid #333' : '2px solid transparent';
+  });
+}
+
+function openEventModal(prefillDate) {
+  document.getElementById('event-modal-title').textContent = '📅 일정 추가';
+  document.getElementById('event-edit-id').value = '';
+  document.getElementById('event-title').value = '';
+  document.getElementById('event-date').value = prefillDate || calSelectedDate || getTodayStr();
+  document.getElementById('event-time').value = '';
+  document.getElementById('event-desc').value = '';
+  document.getElementById('event-submit-btn').textContent = '일정 추가';
+  selectEventColor('#5b4fcf');
+  openModal('event-modal');
+}
+
+function openEditEventModal(id) {
+  const e = getEvents().find(x => x.id === id); if (!e) return;
+  document.getElementById('event-modal-title').textContent = '📅 일정 수정';
+  document.getElementById('event-edit-id').value = id;
+  document.getElementById('event-title').value = e.title;
+  document.getElementById('event-date').value = e.date;
+  document.getElementById('event-time').value = e.time || '';
+  document.getElementById('event-desc').value = e.desc || '';
+  document.getElementById('event-submit-btn').textContent = '수정 완료';
+  selectEventColor(e.color || '#5b4fcf');
+  openModal('event-modal');
+}
+
+async function submitEvent() {
+  const editId = document.getElementById('event-edit-id').value;
+  const title = document.getElementById('event-title').value.trim();
+  const date = document.getElementById('event-date').value;
+  const time = document.getElementById('event-time').value;
+  const desc = document.getElementById('event-desc').value.trim();
+  const color = document.getElementById('event-color').value || '#5b4fcf';
+  if (!title || !date) { showToast('제목과 날짜를 입력해주세요'); return; }
+  const data = { title, date, time, desc, color };
+
+  if (editId) {
+    // EDIT
+    if (fbReady()) {
+      await fbUpdateDoc('events', editId, data);
+      await loadFbEvents();
+    } else {
+      const ev = local.events.find(x => x.id === editId);
+      if (ev) Object.assign(ev, data);
+    }
+    showToast('일정이 수정되었습니다!');
+  } else {
+    // ADD
+    if (fbReady()) {
+      await fbAddDoc('events', data);
+      await loadFbEvents();
+    } else {
+      local.events.push({ id: 'e' + local.nextId++, ...data });
+    }
+    showToast('일정이 추가되었습니다!');
+  }
+  closeModal('event-modal');
+  renderCalendar(); renderSidebarEvents(); renderEventAdminList();
+}
+
+async function deleteEvent(id) {
+  if (!confirm('일정을 삭제하시겠습니까?')) return;
+  if (fbReady()) {
+    await fbDeleteDoc('events', id);
+    await loadFbEvents();
+  } else {
+    local.events = local.events.filter(e => e.id !== id);
+  }
+  renderCalendar(); renderSidebarEvents(); renderEventAdminList();
+  showToast('일정이 삭제되었습니다.');
+}
+
+// ══════════════════════════════════════
+//  POSTS
+// ══════════════════════════════════════
+function openWriteModal() {
+  pendingImgs.write = [];
+  ['write-title','write-body','write-author'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('write-preview').innerHTML = '';
+  document.getElementById('write-cat').value = local.currentBoard === 'notice' ? 'free' : local.currentBoard;
+  openModal('write-modal');
+}
+
+async function submitPost() {
+  const cat = document.getElementById('write-cat').value;
+  const title = document.getElementById('write-title').value.trim();
+  const body = document.getElementById('write-body').value.trim();
+  let author = document.getElementById('write-author').value.trim() || '익명';
+  if (!title || !body) { showToast('제목과 내용을 입력해주세요'); return; }
+  if (cat === 'anon') author = '익명';
+  const today = new Date().toISOString().slice(0, 10);
+
+  showToast('업로드 중...');
+  const images = await uploadImages('write');
+  pendingImgs.write = [];
+
+  const postData = { cat, title, body, author, date: today, likes: 0, images, comments: [] };
+
+  if (fbReady()) {
+    await fbAddDoc('posts', postData);
+  } else {
+    local.posts.unshift({ id: 'p' + local.nextId++, ...postData });
+  }
+
+  closeModal('write-modal');
+  local.currentBoard = cat;
+  showToast('게시글이 등록되었습니다!');
+  if (!fbReady()) render();
+}
+
+function openDetail(id) {
+  const p = getPosts().find(x => x.id === id); if (!p) return;
+  const cat = catInfo[p.cat];
+  const adminBtns = local.isAdmin
+    ? `<div class="admin-post-actions"><button class="admin-edit-btn" onclick="openEditModal('${p.id}')">✏️ 수정</button><button class="admin-del" onclick="deletePost('${p.id}')">🗑️ 삭제</button></div>` : '';
+  const imgs = p.images && p.images.length
+    ? `<div class="detail-images">${p.images.map(src=>`<img src="${src}" alt="" onclick="openLightbox(this.src)">`).join('')}</div>` : '';
+  const coms = (p.comments||[]).length
+    ? p.comments.map(c=>`<div class="comment-item"><div class="comment-author">${c.author}</div><div class="comment-text">${c.text}</div><div class="comment-date">${timeAgo(c.date)}</div></div>`).join('')
+    : '<div style="color:#bbb;font-size:13px;padding:10px 0;">아직 댓글이 없어요.</div>';
+
+  document.getElementById('detail-content').innerHTML = `
+    <span class="detail-cat ${cat.cls}">${cat.label}</span>${adminBtns}
+    <div class="detail-title">${p.title}</div>
+    <div class="detail-meta"><span>${p.cat==='anon'?'🎭 익명':p.author}</span><span>${p.date}</span><span>♥ ${p.likes||0}</span><span>댓글 ${(p.comments||[]).length}</span></div>
+    <div class="detail-body">${p.body}</div>${imgs}
+    <div class="detail-actions"><button class="action-btn${p.liked?' liked':''}" onclick="toggleLike('${p.id}')" id="lbtn-${p.id}">♥ 좋아요 ${p.likes||0}</button></div>
+    <div class="comments-section">
+      <div class="comment-title">댓글 ${(p.comments||[]).length}개</div>
+      <div id="coms-${p.id}">${coms}</div>
+      <div class="comment-input-row">
+        <input type="text" class="comment-input" id="ca-${p.id}" placeholder="닉네임" style="max-width:88px;">
+        <input type="text" class="comment-input" id="ct-${p.id}" placeholder="댓글 입력..." onkeydown="if(event.key==='Enter')addComment('${p.id}')">
+        <button class="comment-btn" onclick="addComment('${p.id}')">등록</button>
+      </div>
+    </div>`;
+  openModal('detail-modal');
+}
+
+async function toggleLike(id) {
+  const posts = getPosts();
+  const p = posts.find(x => x.id === id); if (!p) return;
+  p.liked = !p.liked; p.likes = (p.likes||0) + (p.liked ? 1 : -1);
+  const btn = document.getElementById(`lbtn-${id}`);
+  if (btn) { btn.textContent = `♥ 좋아요 ${p.likes}`; btn.classList.toggle('liked', p.liked); }
+  if (fbReady()) await fbUpdateDoc('posts', id, { likes: p.likes });
+  renderPopular(); renderStats();
+}
+
+async function addComment(id) {
+  const posts = getPosts();
+  const p = posts.find(x => x.id === id); if (!p) return;
+  const author = document.getElementById(`ca-${id}`).value.trim() || '익명';
+  const text = document.getElementById(`ct-${id}`).value.trim();
+  if (!text) return;
+  const today = new Date().toISOString().slice(0, 10);
+  p.comments = p.comments || [];
+  p.comments.push({ author, text, date: today });
+  document.getElementById(`ct-${id}`).value = '';
+  document.getElementById(`ca-${id}`).value = '';
+  const el = document.getElementById(`coms-${id}`);
+  if (el) el.innerHTML = p.comments.map(c=>`<div class="comment-item"><div class="comment-author">${c.author}</div><div class="comment-text">${c.text}</div><div class="comment-date">${timeAgo(c.date)}</div></div>`).join('');
+  if (fbReady()) await fbUpdateDoc('posts', id, { comments: p.comments });
+  renderStats();
+  showToast('댓글이 등록되었습니다!');
+}
+
+async function deletePost(id) {
+  if (!confirm('이 게시글을 삭제하시겠습니까?')) return;
+  if (fbReady()) {
+    await fbDeleteDoc('posts', id);
+  } else {
+    local.posts = local.posts.filter(x => x.id !== id);
+  }
+  closeModal('detail-modal');
+  if (!fbReady()) render();
+  renderAdminPosts();
+  showToast('게시글이 삭제되었습니다.');
+}
+
+function openEditModal(id) {
+  const p = getPosts().find(x => x.id === id); if (!p) return;
+  pendingImgs.edit = [...(p.images||[])];
+  document.getElementById('edit-id').value = id;
+  document.getElementById('edit-title').value = p.title;
+  document.getElementById('edit-body').value = p.body;
+  renderPreviews('edit');
+  closeModal('detail-modal'); openModal('edit-modal');
+}
+
+async function saveEdit() {
+  const id = document.getElementById('edit-id').value;
+  const p = getPosts().find(x => x.id === id); if (!p) return;
+  const newImgs = await uploadImages('edit');
+  // merge existing (already URL) and new
+  const existingUrls = pendingImgs.edit.filter(s => s.startsWith('http'));
+  const images = [...existingUrls, ...newImgs];
+  p.title = document.getElementById('edit-title').value.trim() || p.title;
+  p.body = document.getElementById('edit-body').value.trim() || p.body;
+  p.images = images;
+  pendingImgs.edit = [];
+  if (fbReady()) await fbUpdateDoc('posts', id, { title: p.title, body: p.body, images });
+  closeModal('edit-modal');
+  if (!fbReady()) render();
+  renderAdminPosts();
+  showToast('게시글이 수정되었습니다!');
+}
+
+// ══════════════════════════════════════
+//  NOTICES
+// ══════════════════════════════════════
+function openNoticeModal() {
+  document.getElementById('notice-text-input').value = '';
+  document.getElementById('notice-img-val').value = '';
+  document.getElementById('notice-preview').innerHTML = '';
+  openModal('notice-modal');
+}
+async function addNotice() {
+  const text = document.getElementById('notice-text-input').value.trim(); if (!text) return;
+  const imgB64 = document.getElementById('notice-img-val').value || null;
+  const today = new Date().toISOString().slice(0, 10);
+  let image = null;
+  if (imgB64 && fbReady()) image = await fbUploadImg(imgB64, `notices/${Date.now()}`);
+  else image = imgB64;
+  const data = { text, date: today, image };
+  if (fbReady()) { await fbAddDoc('notices', data); await loadFbNotices(); }
+  else { local.notices.push({ id: 'n' + local.nextId++, ...data }); }
+  closeModal('notice-modal'); renderNoticeBars(); renderAdminNotices();
+  showToast('공지가 추가되었습니다!');
+}
+async function deleteNotice(id) {
+  if (fbReady()) { await fbDeleteDoc('notices', id); await loadFbNotices(); }
+  else local.notices = local.notices.filter(n => n.id !== id);
+  renderNoticeBars(); renderAdminNotices();
+  showToast('공지가 삭제되었습니다.');
+}
+
+// ══════════════════════════════════════
+//  BANNERS
+// ══════════════════════════════════════
+function openBannerModal() {
+  document.getElementById('banner-title-input').value = '';
+  document.getElementById('banner-desc-input').value = '';
+  document.getElementById('banner-img-val').value = '';
+  document.getElementById('banner-img-preview').innerHTML = '';
+  openModal('banner-modal');
+}
+async function saveBanner() {
+  const idx = parseInt(document.getElementById('banner-idx').value);
+  const title = document.getElementById('banner-title-input').value.trim();
+  const desc = document.getElementById('banner-desc-input').value.trim();
+  if (!title) { showToast('제목을 입력해주세요'); return; }
+  const imgB64 = document.getElementById('banner-img-val').value || null;
+  let image = null;
+  if (imgB64 && fbReady()) image = await fbUploadImg(imgB64, `banners/banner_${idx}`);
+  else image = imgB64;
+
+  const banners = getBanners();
+  while (banners.length <= idx) banners.push({ title: '', desc: '', image: null });
+  banners[idx] = { ...banners[idx], title, desc, ...(image ? {image} : {}) };
+
+  if (fbReady()) {
+    await fbUpdateDoc('settings', 'banners', { list: banners });
+    window._fbBanners = banners;
+  } else {
+    local.banners = banners;
+  }
+  closeModal('banner-modal'); renderBanner(); renderAdminBanners();
+  showToast('배너가 수정되었습니다!');
+}
+function changeBanner(i) { local.currentBanner = i; renderBanner(); }
+
+// ══════════════════════════════════════
+//  ADMIN RENDER
+// ══════════════════════════════════════
+function renderAdminPosts() {
+  const tb = document.getElementById('admin-post-tbody'); if (!tb) return;
+  const posts = getPosts();
+  tb.innerHTML = posts.length ? posts.map(p => {
+    const cat = catInfo[p.cat];
+    return `<tr><td><span class="tag ${cat.cls}">${cat.label}</span></td><td class="td-title">${p.title}</td>
+      <td>${p.cat==='anon'?'익명':p.author}</td><td>${p.date}</td><td>♥${p.likes||0}</td>
+      <td><button class="del-btn" onclick="adminDelPost('${p.id}')">삭제</button></td></tr>`;
+  }).join('') : '<tr><td colspan="6" style="text-align:center;color:#bbb;padding:20px;">게시글이 없습니다.</td></tr>';
+}
+async function adminDelPost(id) {
+  if (!confirm('정말 삭제하시겠습니까?')) return;
+  if (fbReady()) await fbDeleteDoc('posts', id);
+  else local.posts = local.posts.filter(x => x.id !== id);
+  renderAdminPosts(); showToast('삭제되었습니다.');
+}
+function renderAdminNotices() {
+  const el = document.getElementById('notice-admin-list'); if (!el) return;
+  const notices = getNotices();
+  el.innerHTML = notices.length ? notices.map(n =>
+    `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f5f5f5;">
+      ${n.image?`<img src="${n.image}" style="width:34px;height:34px;object-fit:cover;border-radius:4px;">` : ''}
+      <span style="flex:1;font-size:13px;color:#333;">${n.text}</span>
+      <span style="font-size:12px;color:#aaa;">${n.date}</span>
+      <button class="del-btn" onclick="deleteNotice('${n.id}')">삭제</button>
+    </div>`
+  ).join('') : '<p style="font-size:13px;color:#aaa;">공지사항이 없습니다.</p>';
+}
+function renderAdminBanners() {
+  const el = document.getElementById('banner-admin-list'); if (!el) return;
+  const banners = getBanners();
+  el.innerHTML = banners.map((b, i) =>
+    `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f5f5f5;">
+      <span style="font-size:12px;color:#888;min-width:44px;">배너 ${i+1}</span>
+      ${b.image?`<img src="${b.image}" style="width:56px;height:36px;object-fit:cover;border-radius:4px;">`:'<div style="width:56px;height:36px;background:var(--primary-faint);border-radius:4px;"></div>'}
+      <div style="flex:1;"><div style="font-size:13px;font-weight:500;">${b.title}</div><div style="font-size:12px;color:#aaa;">${b.desc}</div></div>
+    </div>`
+  ).join('');
+}
+function renderEventAdminList() {
+  const el = document.getElementById('event-admin-list'); if (!el) return;
+  const events = getEvents().sort((a, b) => a.date.localeCompare(b.date));
+  el.innerHTML = events.length ? events.map(e =>
+    `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f5f5f5;">
+      <div style="width:10px;height:10px;border-radius:50%;background:${e.color||'var(--primary)'};flex-shrink:0;"></div>
+      <div style="flex:1;"><div style="font-size:13px;font-weight:600;">${e.title}</div><div style="font-size:12px;color:#aaa;">${e.date}${e.time?' '+e.time:''}</div></div>
+      <button style="background:none;border:none;color:var(--primary);cursor:pointer;font-size:13px;" onclick="openEditEventModal('${e.id}')">✏️</button>
+      <button class="del-btn" onclick="deleteEvent('${e.id}')">삭제</button>
+    </div>`
+  ).join('') : '<p style="font-size:13px;color:#aaa;">등록된 일정이 없습니다.</p>';
+}
+
+// ══════════════════════════════════════
+//  ADMIN AUTH
+// ══════════════════════════════════════
+function showAdminLogin() {
+  if (local.isAdmin) { showAdminPage(); return; }
+  showPage('admin');
+  document.getElementById('admin-pw-screen').style.display = 'flex';
+  document.getElementById('admin-panel').classList.add('hidden');
+}
+function checkPw() {
+  if (document.getElementById('pw-input').value === ADMIN_PW) {
+    local.isAdmin = true;
+    document.getElementById('admin-pw-screen').style.display = 'none';
+    document.getElementById('admin-panel').classList.remove('hidden');
+    document.getElementById('admin-nav-btn').innerHTML = '관리자<span class="admin-badge">ON</span>';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-error').style.display = 'none';
+    document.getElementById('add-event-btn').classList.remove('hidden');
+    renderAdminPosts(); renderAdminNotices(); renderAdminBanners(); renderEventAdminList();
+  } else { document.getElementById('pw-error').style.display = 'block'; }
+}
+function showAdminPage() {
+  showPage('admin');
+  document.getElementById('admin-pw-screen').style.display = 'none';
+  document.getElementById('admin-panel').classList.remove('hidden');
+  renderAdminPosts(); renderAdminNotices(); renderAdminBanners(); renderEventAdminList();
+}
+function exitAdmin() { showPage('main'); render(); }
+
+// ══════════════════════════════════════
+//  FIREBASE DATA LOADERS
+// ══════════════════════════════════════
+async function loadFbNotices() {
+  if (!fbReady()) return;
+  window._fbNotices = await fbGetDocs('notices');
+  renderNoticeBars(); renderAdminNotices();
+}
+async function loadFbBanners() {
+  if (!fbReady()) return;
+  try {
+    const docs = await fbGetDocs('settings');
+    const bannerDoc = docs.find(d => d.id === 'banners');
+    window._fbBanners = bannerDoc ? bannerDoc.list : local.banners;
+  } catch(e) { window._fbBanners = local.banners; }
+  renderBanner(); renderAdminBanners();
+}
+async function loadFbEvents() {
+  if (!fbReady()) return;
+  window._fbEvents = await fbGetDocs('events');
+  renderSidebarEvents();
+  if (document.getElementById('page-calendar').style.display !== 'none') renderCalendar();
+  renderEventAdminList();
+}
+function setupPostsListener() {
+  if (!fbReady()) return;
+  if (unsubPosts) unsubPosts();
+  unsubPosts = fbOnSnapshot('posts', 'createdAt', posts => {
+    window._fbPosts = posts;
+    render();
+    renderAdminPosts();
+  });
+}
+
+// ══════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════
+function openLightbox(src) { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox').classList.add('show'); }
+function closeLightbox() { document.getElementById('lightbox').classList.remove('show'); }
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+document.querySelectorAll('.modal-bg').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('show'); }));
+function showToast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ══════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════
+window.addEventListener('fb-ready', async () => {
+  const fb = window.__fb;
+  const badge = document.getElementById('fb-status-badge');
+
+  if (fb.ready) {
+    badge.textContent = '✅ Firebase 연결됨';
+    badge.className = 'fb-status fb-ok';
+    document.getElementById('setup-banner').classList.add('hidden');
+    // Load all data
+    await loadTheme();
+    setupPostsListener();
+    await loadFbNotices();
+    await loadFbBanners();
+    await loadFbEvents();
+  } else {
+    badge.textContent = '⚠️ 로컬 모드';
+    badge.className = 'fb-status fb-no';
+    document.getElementById('setup-banner').classList.remove('hidden');
+    render();
+  }
+
+  initCal();
+  // Banner auto-rotate
+  setInterval(() => {
+    const banners = getBanners();
+    local.currentBanner = (local.currentBanner + 1) % banners.length;
+    renderBanner();
+  }, 5000);
+});
+</script>
+</body>
+</html>
